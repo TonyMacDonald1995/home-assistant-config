@@ -23,7 +23,6 @@ Manages 3D printer lifecycle notifications, facilities monitoring, air quality a
 ├── entity_list.txt           # Auto-generated entity ID reference — do not edit by hand
 │
 ├── dashboards/
-│   ├── air_quality.yaml      # Air quality dashboard (3D print room)
 │   └── facilities.yaml       # Facilities overview dashboard
 │
 ├── esphome/
