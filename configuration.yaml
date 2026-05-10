@@ -29,6 +29,13 @@ lovelace:
       filename: dashboards/facilities.yaml
       show_in_sidebar: true
       require_admin: false
+    energy-monitor:
+      mode: yaml
+      title: Energy Monitor
+      icon: mdi:lightning-bolt
+      filename: dashboards/energy.yaml
+      show_in_sidebar: true
+      require_admin: false
 
 shell_command:
   git_pull: "git -C /config pull --rebase origin main"
