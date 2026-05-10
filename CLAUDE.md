@@ -29,7 +29,6 @@ Home Assistant configuration for the [MakeNashville](https://makenashville.org) 
 | `git_backup.sh` | Backup script: checkouts ha-backup, merges main, commits, pushes, opens PR |
 | `write_entity_list.sh` | Writes `entity_list.txt` from entities tagged with the `entity_list` HA label |
 | `entity_list.txt` | Auto-generated entity ID reference. **Do not edit by hand.** |
-| `dashboards/air_quality.yaml` | Lovelace YAML dashboard for the 3D print room air quality |
 | `dashboards/facilities.yaml` | Lovelace YAML dashboard for facilities overview |
 | `esphome/kaeser-monitor.yaml` | ESPHome config for the Kaeser pressure/switch sensor |
 

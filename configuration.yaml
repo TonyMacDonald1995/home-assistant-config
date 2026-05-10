@@ -15,13 +15,6 @@ homeassistant:
 
 lovelace:
   dashboards:
-    air-quality:
-      mode: yaml
-      title: Air Quality
-      icon: mdi:air-filter
-      filename: dashboards/air_quality.yaml
-      show_in_sidebar: true
-      require_admin: false
     facilities-overview:
       mode: yaml
       title: Facilities
