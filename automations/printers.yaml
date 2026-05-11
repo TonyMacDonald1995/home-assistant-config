@@ -81,7 +81,7 @@
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         {%- set flavor = 'almost done!' if prog >= 90 else ('halfway there!' if prog >= 50 else 'printing away!') -%}
         :speech_balloon: {{ states('sensor.' + printer + '_print_progress', with_unit=True) }}
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} {{ flavor }} [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} {{ flavor }} <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -228,7 +228,7 @@
         {%- if parts %} — {% endif -%}
         {{ owner }}{{ object_name }} is underway!
         {%- if bed_type %} on a {{ bed_type }}{% endif -%}
-        . [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        . <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - variables:
       is_bambu: "{{ printer in ['kiwi','mango','papaya','strawberry','huckleberry'] }}"
       blocks: >-
@@ -311,7 +311,7 @@
       finished_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :white_check_mark: 100% | {{ job_time_str }}
-        {%- if used_weight %} | {{ used_weight }}{% endif %} — {{ owner }}{{ object_name }} is done! Come grab it and clear the plate for the next maker. [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        {%- if used_weight %} | {{ used_weight }}{% endif %} — {{ owner }}{{ object_name }} is done! Come grab it and clear the plate for the next maker. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -372,7 +372,7 @@
   - variables:
       stopped_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
-        :octagonal_sign: {{ progress }}% — {{ owner }}{{ object_name }} stopped mid-print. Come take a look and see what happened. [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        :octagonal_sign: {{ progress }}% — {{ owner }}{{ object_name }} stopped mid-print. Come take a look and see what happened. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -433,7 +433,7 @@
       error_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :rotating_light:
-        {%- if error_info %} {{ error_info }} —{% endif %} {{ owner }}{{ object_name }} hit a snag. Head over and check on it. [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        {%- if error_info %} {{ error_info }} —{% endif %} {{ owner }}{{ object_name }} hit a snag. Head over and check on it. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -487,7 +487,7 @@
         • {%- set sev = state_attr(trigger.entity_id, i ~ '-Severity') | default('') %}{% if sev %} [{{ sev }}]{% endif %} {{ state_attr(trigger.entity_id, i ~ '-Error') | default('Unknown error') -}}
         {%- set wiki = state_attr(trigger.entity_id, i ~ '-Wiki') %}{% if wiki %} — <{{ wiki }}|More info>{% endif -%}
         {%- endfor %}
-        [Camera Feed]({{ states('input_text.'+printer+'_stream') }})
+        <{{ states('input_text.'+printer+'_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -553,7 +553,7 @@
         {%- endif -%}
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :double_vertical_bar: {{ progress }}%
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is on hold. Head over when you get a chance! [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is on hold. Head over when you get a chance! <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
@@ -671,7 +671,7 @@
         {%- endif -%}
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :arrow_forward: {{ progress }}%
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is back at it! [Camera Feed]({{ states('input_text.' + printer + '_stream') }})
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is back at it! <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
   - choose:
     - conditions:
       - condition: template
