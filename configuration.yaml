@@ -45,7 +45,7 @@ rest_command:
       {"channel": {{ channel | tojson }}, "text": {{ text | tojson }},
        "username": {{ username | tojson }}, "icon_emoji": {{ icon_emoji | tojson }}
        {% if blocks is defined and blocks %}, "blocks": {{ blocks }}{% endif %}
-       {% if thread_ts is defined and thread_ts %}, "thread_ts": {{ thread_ts | tojson }}{% endif %}}
+       {% if thread_ts is defined and thread_ts %}, "thread_ts": {{ thread_ts | string | tojson }}{% endif %}}
   slack_respond:
     url: "{{ response_url }}"
     method: POST
