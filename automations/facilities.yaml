@@ -363,3 +363,61 @@
     target:
       entity_id: input_boolean.warehouse_heat_morning_fired
   mode: single
+
+- id: warehouse_heat_realtime_warm
+  alias: Warehouse Heat — Real-time (Warm)
+  description: Alert members when indoor heat index crosses 88°F (warm tier)
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.warehouse_max_heat_index
+    above: 88
+    for:
+      minutes: 10
+  conditions:
+  - condition: template
+    value_template: >
+      {% set last = this.attributes.last_triggered %}
+      {{ last is none or (now() - last).total_seconds() > 14400 }}
+  actions:
+  - variables:
+      hottest: "{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}"
+      hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
+  - action: notify.make_nashville
+    data:
+      target: "#facilities-feed"
+      message: |
+        :warning: *Warehouse is heating up*
+        *{{ hottest }}* is at *{{ hi }}°F heat index* — it's officially uncomfortable in there. Hydrate and take breaks if you're working.
+      data:
+        username: Heat Watch
+        icon: sun_with_face
+  mode: single
+
+- id: warehouse_heat_realtime_hot
+  alias: Warehouse Heat — Real-time (Hot)
+  description: Alert members when indoor heat index crosses 95°F (hot tier) — fires independently of warm-tier cooldown
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.warehouse_max_heat_index
+    above: 95
+    for:
+      minutes: 10
+  conditions:
+  - condition: template
+    value_template: >
+      {% set last = this.attributes.last_triggered %}
+      {{ last is none or (now() - last).total_seconds() > 14400 }}
+  actions:
+  - variables:
+      hottest: "{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}"
+      hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
+  - action: notify.make_nashville
+    data:
+      target: "#facilities-feed"
+      message: |
+        :fire: *Warehouse is HOT*
+        *{{ hottest }}* is at *{{ hi }}°F heat index*. Take it seriously — drink water, take breaks, watch for signs of heat exhaustion in yourself and others.
+      data:
+        username: Heat Watch
+        icon: fire
+  mode: single
