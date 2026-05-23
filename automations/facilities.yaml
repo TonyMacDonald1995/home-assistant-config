@@ -494,7 +494,8 @@
         {% endfor %}
         {{ ns.items }}
       peak_hi: >
-        {{ (forecast_today | map(attribute='hi') | list | max | default(0)) | round(0) | int }}
+        {% set hi_values = forecast_today | map(attribute='hi') | list %}
+        {{ (hi_values | max | round(0) | int) if hi_values else 0 }}
       peak_hour: >
         {% set sorted = forecast_today | sort(attribute='hi', reverse=true) | list %}
         {{ sorted[0].hour if sorted else 0 }}
