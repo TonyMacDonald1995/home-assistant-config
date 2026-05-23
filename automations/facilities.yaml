@@ -351,3 +351,15 @@
         username: Facilities Pulse
         icon: warning
   mode: single
+
+- id: warehouse_heat_daily_reset
+  alias: Warehouse Heat — Daily Reset
+  description: Clear the morning-fired flag at midnight so it's fresh each day
+  triggers:
+  - trigger: time
+    at: "00:00:00"
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.warehouse_heat_morning_fired
+  mode: single
