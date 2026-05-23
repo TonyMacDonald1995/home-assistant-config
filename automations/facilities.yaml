@@ -421,3 +421,34 @@
         username: Heat Watch
         icon: fire
   mode: single
+
+- id: warehouse_heat_midday_confirmation
+  alias: Warehouse Heat — Midday Confirmation
+  description: Confirm the morning prediction at 12:30pm if it's actually hot now
+  triggers:
+  - trigger: time
+    at: "12:30:00"
+  conditions:
+  - condition: state
+    entity_id: input_boolean.warehouse_heat_morning_fired
+    state: "on"
+  - condition: template
+    value_template: >
+      {{ states('input_datetime.warehouse_heat_morning_fired_at') == now().strftime('%Y-%m-%d') }}
+  - condition: numeric_state
+    entity_id: sensor.warehouse_max_heat_index
+    above: 88
+  actions:
+  - variables:
+      hottest: "{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}"
+      hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
+  - action: notify.make_nashville
+    data:
+      target: "#facilities-feed"
+      message: |
+        :fire: *Yep, it's hot in here*
+        Right now the *{{ hottest }}* is the warmest at *{{ hi }}°F heat index*. Take breaks, hydrate, look out for each other.
+      data:
+        username: Heat Watch
+        icon: fire
+  mode: single
