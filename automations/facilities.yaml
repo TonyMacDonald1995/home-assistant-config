@@ -384,7 +384,7 @@
       hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
   - action: notify.make_nashville
     data:
-      target: "#facilities-feed"
+      target: "#climate-feed"
       message: |
         :warning: *Warehouse is heating up*
         *{{ hottest }}* is at *{{ hi }}°F heat index* — it's officially uncomfortable in there. Hydrate and take breaks if you're working.
@@ -413,7 +413,7 @@
       hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
   - action: notify.make_nashville
     data:
-      target: "#facilities-feed"
+      target: "#climate-feed"
       message: |
         :fire: *Warehouse is HOT*
         *{{ hottest }}* is at *{{ hi }}°F heat index*. Take it seriously — drink water, take breaks, watch for signs of heat exhaustion in yourself and others.
@@ -444,7 +444,7 @@
       hi: "{{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}"
   - action: notify.make_nashville
     data:
-      target: "#facilities-feed"
+      target: "#climate-feed"
       message: |
         :fire: *Yep, it's hot in here*
         Right now the *{{ hottest }}* is the warmest at *{{ hi }}°F heat index*. Take breaks, hydrate, look out for each other.
@@ -506,7 +506,7 @@
       sequence:
       - action: notify.make_nashville
         data:
-          target: "#facilities-feed"
+          target: "#climate-feed"
           message: |
             :sun_with_face: *Heads up — it's going to be hot today*
             Forecast peak: *{{ peak_hi }}°F heat index* around {{ (peak_hour % 12) if (peak_hour % 12) != 0 else 12 }}{{ 'am' if peak_hour < 12 else 'pm' }}.
