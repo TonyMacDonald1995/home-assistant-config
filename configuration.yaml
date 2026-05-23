@@ -136,6 +136,16 @@ input_boolean:
   deploy_restart_in_progress:
     name: Deploy Restart In Progress
     icon: mdi:restart
+  warehouse_heat_morning_fired:
+    name: Warehouse Heat Morning Fired
+    icon: mdi:weather-sunny-alert
+
+input_datetime:
+  warehouse_heat_morning_fired_at:
+    name: Warehouse Heat Morning Fired At
+    has_date: true
+    has_time: false
+    icon: mdi:calendar-clock
 
 recorder:
   purge_keep_days: 14
@@ -358,6 +368,171 @@ template:
         availability: "{{ states('sensor.dragonfruit_display_name') not in ['unknown', 'unavailable'] }}"
         state: >
           {{states('sensor.dragonfruit_filename').replace(states('sensor.dragonfruit_display_name') + '-', '')}}
+
+      - name: "Woodshop Heat Index"
+        unique_id: woodshop_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ states('sensor.woodshop_climate_sensor_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.woodshop_climate_sensor_humidity') not in ['unknown', 'unavailable'] }}
+        state: >
+          {% set t = states('sensor.woodshop_climate_sensor_temperature') | float(0) %}
+          {% set rh = states('sensor.woodshop_climate_sensor_humidity') | float(0) %}
+          {% if t < 80 %}
+            {{ t | round(1) }}
+          {% else %}
+            {% set hi = -42.379
+              + 2.04901523 * t
+              + 10.14333127 * rh
+              - 0.22475541 * t * rh
+              - 0.00683783 * t * t
+              - 0.05481717 * rh * rh
+              + 0.00122874 * t * t * rh
+              + 0.00085282 * t * rh * rh
+              - 0.00000199 * t * t * rh * rh %}
+            {{ hi | round(1) }}
+          {% endif %}
+
+      - name: "3D Print Heat Index"
+        unique_id: 3d_print_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ states('sensor.air_quality_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.air_quality_humidity') not in ['unknown', 'unavailable'] }}
+        state: >
+          {% set t = states('sensor.air_quality_temperature') | float(0) %}
+          {% set rh = states('sensor.air_quality_humidity') | float(0) %}
+          {% if t < 80 %}
+            {{ t | round(1) }}
+          {% else %}
+            {% set hi = -42.379
+              + 2.04901523 * t
+              + 10.14333127 * rh
+              - 0.22475541 * t * rh
+              - 0.00683783 * t * t
+              - 0.05481717 * rh * rh
+              + 0.00122874 * t * t * rh
+              + 0.00085282 * t * rh * rh
+              - 0.00000199 * t * t * rh * rh %}
+            {{ hi | round(1) }}
+          {% endif %}
+
+      - name: "Ceramics Heat Index"
+        unique_id: ceramics_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ states('sensor.ceramics_climate_sensor_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.ceramics_climate_sensor_humidity') not in ['unknown', 'unavailable'] }}
+        state: >
+          {% set t = states('sensor.ceramics_climate_sensor_temperature') | float(0) %}
+          {% set rh = states('sensor.ceramics_climate_sensor_humidity') | float(0) %}
+          {% if t < 80 %}
+            {{ t | round(1) }}
+          {% else %}
+            {% set hi = -42.379
+              + 2.04901523 * t
+              + 10.14333127 * rh
+              - 0.22475541 * t * rh
+              - 0.00683783 * t * t
+              - 0.05481717 * rh * rh
+              + 0.00122874 * t * t * rh
+              + 0.00085282 * t * rh * rh
+              - 0.00000199 * t * t * rh * rh %}
+            {{ hi | round(1) }}
+          {% endif %}
+
+      - name: "Front Hallway Heat Index"
+        unique_id: front_hallway_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ states('sensor.front_hallway_climate_sensor_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.front_hallway_climate_sensor_humidity') not in ['unknown', 'unavailable'] }}
+        state: >
+          {% set t = states('sensor.front_hallway_climate_sensor_temperature') | float(0) %}
+          {% set rh = states('sensor.front_hallway_climate_sensor_humidity') | float(0) %}
+          {% if t < 80 %}
+            {{ t | round(1) }}
+          {% else %}
+            {% set hi = -42.379
+              + 2.04901523 * t
+              + 10.14333127 * rh
+              - 0.22475541 * t * rh
+              - 0.00683783 * t * t
+              - 0.05481717 * rh * rh
+              + 0.00122874 * t * t * rh
+              + 0.00085282 * t * rh * rh
+              - 0.00000199 * t * t * rh * rh %}
+            {{ hi | round(1) }}
+          {% endif %}
+
+      - name: "Warehouse Max Heat Index"
+        unique_id: warehouse_max_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ [
+               states('sensor.woodshop_heat_index'),
+               states('sensor.3d_print_heat_index'),
+               states('sensor.ceramics_heat_index'),
+               states('sensor.front_hallway_heat_index')
+             ] | reject('in', ['unknown', 'unavailable']) | list | length > 0 }}
+        state: >
+          {% set best = namespace(val=-1000, any=false) %}
+          {% for entity in [
+            'sensor.woodshop_heat_index',
+            'sensor.3d_print_heat_index',
+            'sensor.ceramics_heat_index',
+            'sensor.front_hallway_heat_index'
+          ] %}
+            {% set s = states(entity) %}
+            {% if s not in ['unknown', 'unavailable'] %}
+              {% set best.any = true %}
+              {% set v = s | float(0) %}
+              {% if v > best.val %}{% set best.val = v %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if best.any %}{{ best.val | round(1) }}{% else %}unavailable{% endif %}
+        attributes:
+          hottest_area: >
+            {% set best = namespace(name='unknown', val=-1000) %}
+            {% for name, entity in [
+              ('Woodshop',       'sensor.woodshop_heat_index'),
+              ('3D Print Room',  'sensor.3d_print_heat_index'),
+              ('Ceramics',       'sensor.ceramics_heat_index'),
+              ('Front Hallway',  'sensor.front_hallway_heat_index')
+            ] %}
+              {% set s = states(entity) %}
+              {% if s not in ['unknown', 'unavailable'] %}
+                {% set v = s | float(0) %}
+                {% if v > best.val %}
+                  {% set best.val = v %}
+                  {% set best.name = name %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ best.name }}
+          hottest_area_temperature: >
+            {% set name_to_temp = {
+              'Woodshop':       'sensor.woodshop_climate_sensor_temperature',
+              '3D Print Room':  'sensor.air_quality_temperature',
+              'Ceramics':       'sensor.ceramics_climate_sensor_temperature',
+              'Front Hallway':  'sensor.front_hallway_climate_sensor_temperature'
+            } %}
+            {% set hottest = state_attr('sensor.warehouse_max_heat_index', 'hottest_area') %}
+            {% if hottest in name_to_temp %}
+              {{ states(name_to_temp[hottest]) | float(0) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
 
 sensor:
   # Weekly print counts — used by the Sunday metrics automation
