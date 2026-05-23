@@ -359,6 +359,32 @@ template:
         state: >
           {{states('sensor.dragonfruit_filename').replace(states('sensor.dragonfruit_display_name') + '-', '')}}
 
+      - name: "Woodshop Heat Index"
+        unique_id: woodshop_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ states('sensor.woodshop_climate_sensor_temperature') not in ['unknown', 'unavailable']
+             and states('sensor.woodshop_climate_sensor_humidity') not in ['unknown', 'unavailable'] }}
+        state: >
+          {% set t = states('sensor.woodshop_climate_sensor_temperature') | float(0) %}
+          {% set rh = states('sensor.woodshop_climate_sensor_humidity') | float(0) %}
+          {% if t < 80 %}
+            {{ t | round(1) }}
+          {% else %}
+            {% set hi = -42.379
+              + 2.04901523 * t
+              + 10.14333127 * rh
+              - 0.22475541 * t * rh
+              - 0.00683783 * t * t
+              - 0.05481717 * rh * rh
+              + 0.00122874 * t * t * rh
+              + 0.00085282 * t * rh * rh
+              - 0.00000199 * t * t * rh * rh %}
+            {{ hi | round(1) }}
+          {% endif %}
+
 sensor:
   # Weekly print counts — used by the Sunday metrics automation
   - platform: history_stats
