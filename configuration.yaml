@@ -136,6 +136,16 @@ input_boolean:
   deploy_restart_in_progress:
     name: Deploy Restart In Progress
     icon: mdi:restart
+  warehouse_heat_morning_fired:
+    name: Warehouse Heat Morning Fired
+    icon: mdi:weather-sunny-alert
+
+input_datetime:
+  warehouse_heat_morning_fired_at:
+    name: Warehouse Heat Morning Fired At
+    has_date: true
+    has_time: false
+    icon: mdi:calendar-clock
 
 recorder:
   purge_keep_days: 14
