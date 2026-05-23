@@ -452,3 +452,73 @@
         username: Heat Watch
         icon: fire
   mode: single
+
+- id: warehouse_heat_morning_headsup
+  alias: Warehouse Heat — Morning Heads-up
+  description: 7am forecast-based heat heads-up if today's peak HI will be 88+
+  triggers:
+  - trigger: time
+    at: "07:00:00"
+  actions:
+  - action: weather.get_forecasts
+    data:
+      type: hourly
+    target:
+      entity_id: weather.forecast_home
+    response_variable: weather_response
+  - variables:
+      forecast_today: >
+        {% set entries = weather_response['weather.forecast_home'].forecast | default([]) %}
+        {% set today = now().date() %}
+        {% set ns = namespace(items=[]) %}
+        {% for e in entries %}
+          {% set dt = e.datetime | as_datetime %}
+          {% if dt.date() == today and dt.hour >= 9 and dt.hour <= 20 %}
+            {% set t = e.temperature | float(0) %}
+            {% set rh = e.humidity | float(0) %}
+            {% if t < 80 %}
+              {% set hi = t %}
+            {% else %}
+              {% set hi = -42.379
+                + 2.04901523 * t
+                + 10.14333127 * rh
+                - 0.22475541 * t * rh
+                - 0.00683783 * t * t
+                - 0.05481717 * rh * rh
+                + 0.00122874 * t * t * rh
+                + 0.00085282 * t * rh * rh
+                - 0.00000199 * t * t * rh * rh %}
+            {% endif %}
+            {% set ns.items = ns.items + [{'hi': hi, 'hour': dt.hour, 'temp': t, 'rh': rh}] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      peak_hi: >
+        {{ (forecast_today | map(attribute='hi') | list | max | default(0)) | round(0) | int }}
+      peak_hour: >
+        {% set sorted = forecast_today | sort(attribute='hi', reverse=true) | list %}
+        {{ sorted[0].hour if sorted else 0 }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ peak_hi >= 88 }}"
+      sequence:
+      - action: notify.make_nashville
+        data:
+          target: "#facilities-feed"
+          message: |
+            :sun_with_face: *Heads up — it's going to be hot today*
+            Forecast peak: *{{ peak_hi }}°F heat index* around {{ (peak_hour % 12) if (peak_hour % 12) != 0 else 12 }}{{ 'am' if peak_hour < 12 else 'pm' }}.
+            The warehouse usually runs warmer than outside. Dress light, bring water, plan breaks.
+          data:
+            username: Heat Watch
+            icon: sun_with_face
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.warehouse_heat_morning_fired
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.warehouse_heat_morning_fired_at
+        data:
+          date: "{{ now().strftime('%Y-%m-%d') }}"
+  mode: single
