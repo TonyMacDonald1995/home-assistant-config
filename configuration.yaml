@@ -463,6 +463,67 @@ template:
             {{ hi | round(1) }}
           {% endif %}
 
+      - name: "Warehouse Max Heat Index"
+        unique_id: warehouse_max_heat_index
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ [
+               states('sensor.woodshop_heat_index'),
+               states('sensor.3d_print_heat_index'),
+               states('sensor.ceramics_heat_index'),
+               states('sensor.front_hallway_heat_index')
+             ] | reject('in', ['unknown', 'unavailable']) | list | length > 0 }}
+        state: >
+          {% set best = namespace(val=-1000, any=false) %}
+          {% for entity in [
+            'sensor.woodshop_heat_index',
+            'sensor.3d_print_heat_index',
+            'sensor.ceramics_heat_index',
+            'sensor.front_hallway_heat_index'
+          ] %}
+            {% set s = states(entity) %}
+            {% if s not in ['unknown', 'unavailable'] %}
+              {% set best.any = true %}
+              {% set v = s | float(0) %}
+              {% if v > best.val %}{% set best.val = v %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if best.any %}{{ best.val | round(1) }}{% else %}unavailable{% endif %}
+        attributes:
+          hottest_area: >
+            {% set best = namespace(name='unknown', val=-1000) %}
+            {% for name, entity in [
+              ('Woodshop',       'sensor.woodshop_heat_index'),
+              ('3D Print Room',  'sensor.3d_print_heat_index'),
+              ('Ceramics',       'sensor.ceramics_heat_index'),
+              ('Front Hallway',  'sensor.front_hallway_heat_index')
+            ] %}
+              {% set s = states(entity) %}
+              {% if s not in ['unknown', 'unavailable'] %}
+                {% set v = s | float(0) %}
+                {% if v > best.val %}
+                  {% set best.val = v %}
+                  {% set best.name = name %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ best.name }}
+          hottest_area_temperature: >
+            {% set name_to_temp = {
+              'Woodshop':       'sensor.woodshop_climate_sensor_temperature',
+              '3D Print Room':  'sensor.air_quality_temperature',
+              'Ceramics':       'sensor.ceramics_climate_sensor_temperature',
+              'Front Hallway':  'sensor.front_hallway_climate_sensor_temperature'
+            } %}
+            {% set hottest = state_attr('sensor.warehouse_max_heat_index', 'hottest_area') %}
+            {% if hottest in name_to_temp %}
+              {{ states(name_to_temp[hottest]) | float(0) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
+
 sensor:
   # Weekly print counts — used by the Sunday metrics automation
   - platform: history_stats
