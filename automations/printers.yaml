@@ -693,8 +693,10 @@
           {%- set ok = states('sensor.' ~ p.id ~ '_prints_completed_week') | int(0) %}
           {%- set fail = states('sensor.' ~ p.id ~ '_prints_failed_week') | int(0) %}
           {%- set ns.total_ok = ns.total_ok + ok %}
-          {%- set ns.total_fail = ns.total_fail + fail %}
-        {{ p.emoji }} {{ p.id | capitalize }}: {{ ok }} :white_check_mark:  {{ fail }} :x:
+          {%- if p.id != 'pineapple' %}
+            {%- set ns.total_fail = ns.total_fail + fail %}
+          {%- endif %}
+        {{ p.emoji }} {{ p.id | capitalize }}: {{ ok }} :white_check_mark:  {{ '—' if p.id == 'pineapple' else fail }} :x:
         {%- endfor %}
         ──────────────────────
         Total: {{ ns.total_ok }} :white_check_mark:  {{ ns.total_fail }} :x:
