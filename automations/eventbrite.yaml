@@ -57,23 +57,34 @@
   conditions:
     - condition: template
       value_template: >
-        {{ states('sensor.eventbrite_daily_signups') | int(0) > 0
-           and state_attr('sensor.eventbrite_daily_signups', 'attendees') is not none }}
+        {{ (states('sensor.eventbrite_daily_signups') | int(0) > 0
+            and state_attr('sensor.eventbrite_daily_signups', 'attendees') is not none)
+           or (states('sensor.eventbrite_today_events') | int(0) > 0
+               and state_attr('sensor.eventbrite_today_events', 'events') is not none) }}
   actions:
     - variables:
-        attendees: "{{ state_attr('sensor.eventbrite_daily_signups', 'attendees') }}"
+        attendees: "{{ state_attr('sensor.eventbrite_daily_signups', 'attendees') or [] }}"
+        today_events: "{{ state_attr('sensor.eventbrite_today_events', 'events') or [] }}"
         count: "{{ states('sensor.eventbrite_daily_signups') | int(0) }}"
     - variables:
-        event_lines: |-
+        today_lines: |-
+          {% for event in today_events %}
+          {%- set signups = event.ticket_classes | default([]) | map(attribute='quantity_sold') | map('int', default=0) | sum -%}
+          {%- set capacity = event.ticket_classes | default([]) | selectattr('quantity_total', 'defined') | map(attribute='quantity_total') | map('int', default=0) | sum -%}
+          *{{ event.name.text }}* — {{ signups }}{% if capacity > 0 %} of {{ capacity }}{% endif %} signed up
+          {% endfor %}
+        signup_lines: |-
           {% set ns = namespace(events={}) %}
           {% for a in attendees %}
-            {% set ename = a.event.name.text %}
-            {% set names = ns.events.get(ename, []) + [a.profile.name] %}
-            {% set ns.events = dict(ns.events, **{ename: names}) %}
+            {%- set ename = a.event.name.text -%}
+            {%- set existing = ns.events.get(ename, {'date': a.event.start.local, 'names': []}) -%}
+            {%- set names = existing['names'] + [a.profile.name] -%}
+            {%- set ns.events = dict(ns.events, **{ename: {'date': existing['date'], 'names': names}}) -%}
           {% endfor %}
-          {% for event, names in ns.events.items() %}
+          {% for ename, info in ns.events.items() %}
+            {%- set edate = info['date'] | as_datetime | timestamp_custom('%a, %b %-d at %-I:%M %p') -%}
             {%- set ns2 = namespace(counts={}, display=[]) -%}
-            {%- for n in names -%}
+            {%- for n in info['names'] -%}
               {%- set ns2.counts = dict(ns2.counts, **{n: ns2.counts.get(n, 0) + 1}) -%}
             {%- endfor -%}
             {%- for name, c in ns2.counts.items() -%}
@@ -83,14 +94,20 @@
                 {%- set ns2.display = ns2.display + [name] -%}
               {%- endif -%}
             {%- endfor %}
-          *{{ event }}* — {{ ns2.display | join(', ') }}
+          *{{ ename }}* ({{ edate }}) — {{ ns2.display | join(', ') }}
           {% endfor %}
     - action: notify.make_nashville
       data:
         target: "#eventbrite-feed"
         message: |-
-          :wave: *Eventbrite Signups — Last 24 Hours* ({{ count }} new)
-          {{ event_lines }}
+          {%- set ns = namespace(sections=[]) -%}
+          {%- if today_events | length > 0 -%}
+            {%- set ns.sections = ns.sections + [':calendar: *Events Today*\n' ~ today_lines | trim] -%}
+          {%- endif -%}
+          {%- if count > 0 -%}
+            {%- set ns.sections = ns.sections + [':wave: *New Signups — Last 24 Hours* (' ~ count ~ ' new)\n' ~ signup_lines | trim] -%}
+          {%- endif -%}
+          {{ ns.sections | join('\n\n') }}
         data:
           username: Eventbrite
           icon: calendar
