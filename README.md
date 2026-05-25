@@ -27,6 +27,7 @@ Manages 3D printer lifecycle notifications, facilities monitoring, air quality a
 │
 ├── esphome/
 │   ├── kaeser-monitor.yaml   # Kaeser air compressor pressure/switch sensor
+│   ├── emporia-vue.yaml      # Emporia Vue 3 power monitor
 │   └── secrets.yaml          # ⛔ Not committed — see Secrets
 │
 ├── blueprints/               # Automation blueprints
