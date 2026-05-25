@@ -237,6 +237,21 @@ template:
           {% elif co2 > 800  or voc > 150 or nox > 50  or pm25 > 12 %}Moderate
           {% else %}Good{% endif %}
 
+      - name: "Outdoor Temperature"
+        unique_id: outdoor_temperature
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        availability: >
+          {{ state_attr('weather.home', 'temperature') is not none }}
+        state: >
+          {% set t = state_attr('weather.home', 'temperature') | float(0) %}
+          {% if state_attr('weather.home', 'temperature_unit') == '°C' %}
+            {{ ((t * 9 / 5) + 32) | round(1) }}
+          {% else %}
+            {{ t | round(1) }}
+          {% endif %}
+
       - name: "Kiwi Display Name"
         unique_id: kiwi_display_name
         availability: "{{ states('sensor.kiwi_gcode_filename') not in ['unknown', 'unavailable'] }}"
