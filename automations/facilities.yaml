@@ -548,6 +548,7 @@
           data:
             username: Heat Watch
             icon: cold_face
+  mode: single
 
 - id: warehouse_heat_hourly_status
   alias: Warehouse Heat — Hourly Status
@@ -618,5 +619,4 @@
           - 0.00000199 * ot * ot * orh * orh -%}
         {% endif -%}
         :partly_sunny: {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%  → {{ out_hi | round(0) | int }}°F HI
-  mode: single
   mode: single
