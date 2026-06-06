@@ -548,4 +548,75 @@
           data:
             username: Heat Watch
             icon: cold_face
+
+- id: warehouse_heat_hourly_status
+  alias: Warehouse Heat — Hourly Status
+  description: Hourly per-area temp/humidity/heat-index post to #climate-feed while the max indoor heat index is above 80°F
+  triggers:
+  - trigger: time_pattern
+    hours: /1
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.warehouse_max_heat_index
+    above: 80
+  actions:
+  - variables:
+      indoor_areas:
+        - name: Woodshop
+          temp: sensor.woodshop_climate_sensor_temperature
+          humidity: sensor.woodshop_climate_sensor_humidity
+          hi: sensor.woodshop_heat_index
+        - name: 3D Print Room
+          temp: sensor.air_quality_temperature
+          humidity: sensor.air_quality_humidity
+          hi: sensor.3d_print_heat_index
+        - name: Ceramics
+          temp: sensor.ceramics_climate_sensor_temperature
+          humidity: sensor.ceramics_climate_sensor_humidity
+          hi: sensor.ceramics_heat_index
+        - name: Front Hallway
+          temp: sensor.front_hallway_climate_sensor_temperature
+          humidity: sensor.front_hallway_climate_sensor_humidity
+          hi: sensor.front_hallway_heat_index
+  - action: notify.make_nashville
+    data:
+      target: "#climate-feed"
+      data:
+        username: Heat Watch
+        icon: fire
+      message: |
+        :fire: *Warehouse Climate — Hourly*
+        *{{ now().strftime('%a, %b %-d  %-I:%M %p') }}*
+
+        Hottest: *{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}* — {{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}°F HI
+
+        {% for a in indoor_areas -%}
+        {% set t_raw = states(a.temp) -%}
+        {% set h_raw = states(a.humidity) -%}
+        {% set hi_raw = states(a.hi) -%}
+        {% if t_raw not in ['unknown','unavailable',none] and h_raw not in ['unknown','unavailable',none] and hi_raw not in ['unknown','unavailable',none] -%}
+        {% set t = t_raw | float(0) -%}
+        {% set h = h_raw | float(0) -%}
+        {% set hi = hi_raw | float(0) -%}
+        {% set icon = ':red_circle:' if hi >= 103 else ':large_orange_circle:' if hi >= 90 else ':yellow_circle:' if hi >= 80 else ':green_circle:' -%}
+        {{ icon }} {{ "%-17s"|format(a.name) }} {{ "%.1f°F"|format(t) }}  {{ h | round(0) | int }}%  → {{ hi | round(0) | int }}°F HI
+        {% endif -%}
+        {% endfor -%}
+        {% set ot = state_attr('weather.forecast_home','temperature') | float(0) -%}
+        {% set orh = state_attr('weather.forecast_home','humidity') | float(0) -%}
+        {% if ot < 80 -%}
+        {% set out_hi = ot -%}
+        {% else -%}
+        {% set out_hi = -42.379
+          + 2.04901523 * ot
+          + 10.14333127 * orh
+          - 0.22475541 * ot * orh
+          - 0.00683783 * ot * ot
+          - 0.05481717 * orh * orh
+          + 0.00122874 * ot * ot * orh
+          + 0.00085282 * ot * orh * orh
+          - 0.00000199 * ot * ot * orh * orh -%}
+        {% endif -%}
+        :partly_sunny: {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%  → {{ out_hi | round(0) | int }}°F HI
+  mode: single
   mode: single
