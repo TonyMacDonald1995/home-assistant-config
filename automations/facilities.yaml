@@ -437,7 +437,7 @@
       {{ states('input_datetime.warehouse_heat_morning_fired_at') == now().strftime('%Y-%m-%d') }}
   - condition: numeric_state
     entity_id: sensor.warehouse_max_heat_index
-    above: 88
+    above: 80
   actions:
   - variables:
       hottest: "{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}"
