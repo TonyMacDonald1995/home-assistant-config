@@ -33,12 +33,16 @@ jobs:
             echo "required=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Git pull config on HA host
+      - name: Git pull config on HA host (via SSH addon)
+        # shell_command runs in the HA Core container, which doesn't ship
+        # git. Run the pull inside the Advanced SSH addon instead, which
+        # has git available and read access to /config.
         run: |
           curl -f -s -X POST \
             -H "Authorization: Bearer ${{ secrets.HA_TOKEN }}" \
             -H "Content-Type: application/json" \
-            "${{ secrets.HA_URL }}/api/services/shell_command/git_pull"
+            -d '{"addon": "a0d7b954_ssh", "input": "git -C /config pull --rebase origin main"}' \
+            "${{ secrets.HA_URL }}/api/services/hassio/addon_stdin"
 
       - name: Wait 5s for git pull to finish
         run: sleep 5
@@ -188,7 +192,7 @@ jobs:
           curl -s -X POST \
             -H "Authorization: Bearer ${{ secrets.HA_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"addon": "core_ssh", "input": "bash /config/git_backup.sh"}' \
+            -d '{"addon": "a0d7b954_ssh", "input": "bash /config/git_backup.sh"}' \
             "${{ secrets.HA_URL }}/api/services/hassio/addon_stdin"
 
       # --- Failure notification ---

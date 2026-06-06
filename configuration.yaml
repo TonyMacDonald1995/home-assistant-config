@@ -31,7 +31,6 @@ lovelace:
       require_admin: false
 
 shell_command:
-  git_pull: "git -C /config pull --rebase origin main"
   write_entity_list: "bash /config/write_entity_list.sh"
 
 rest_command:
