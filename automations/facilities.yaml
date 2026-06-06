@@ -584,12 +584,15 @@
       target: "#climate-feed"
       data:
         username: Heat Watch
-        icon: fire
+        icon: thermometer
       message: |
-        :fire: *Warehouse Climate — Hourly*
+        {% set max_hi = states('sensor.warehouse_max_heat_index') | float(0) -%}
+        {% set title_icon = ':fire:' if max_hi >= 103 else ':hot_face:' if max_hi >= 90 else ':thermometer:' -%}
+        {% set care_line = '\nDangerous heat. Limit time in there. Watch yourselves and each other.' if max_hi >= 103 else '\nStress conditions. Water, breaks, check on each other.' if max_hi >= 90 else '' -%}
+        {{ title_icon }} *Warehouse Climate — Hourly*
         *{{ now().strftime('%a, %b %-d  %-I:%M %p') }}*
 
-        Hottest: *{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}* — {{ states('sensor.warehouse_max_heat_index') | float(0) | round(0) | int }}°F HI
+        Currently warmest: *{{ state_attr('sensor.warehouse_max_heat_index', 'hottest_area') }}* — {{ max_hi | round(0) | int }}°F HI
 
         {% for a in indoor_areas -%}
         {% set t_raw = states(a.temp) -%}
@@ -599,7 +602,7 @@
         {% set t = t_raw | float(0) -%}
         {% set h = h_raw | float(0) -%}
         {% set hi = hi_raw | float(0) -%}
-        {% set icon = ':red_circle:' if hi >= 103 else ':large_orange_circle:' if hi >= 90 else ':yellow_circle:' if hi >= 80 else ':green_circle:' -%}
+        {% set icon = ':rotating_light:' if hi >= 103 else ':hot_face:' if hi >= 90 else ':warning:' if hi >= 80 else ':white_check_mark:' -%}
         {{ icon }} {{ "%-17s"|format(a.name) }} {{ "%.1f°F"|format(t) }}  {{ h | round(0) | int }}%  → {{ hi | round(0) | int }}°F HI
         {% endif -%}
         {% endfor -%}
@@ -618,5 +621,7 @@
           + 0.00085282 * ot * orh * orh
           - 0.00000199 * ot * ot * orh * orh -%}
         {% endif -%}
-        :partly_sunny: {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%  → {{ out_hi | round(0) | int }}°F HI
+        {% set out_icon = ':rotating_light:' if out_hi >= 103 else ':hot_face:' if out_hi >= 90 else ':warning:' if out_hi >= 80 else ':white_check_mark:' -%}
+        {{ out_icon }} {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%  → {{ out_hi | round(0) | int }}°F HI
+        {{ care_line -}}
   mode: single
