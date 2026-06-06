@@ -10,7 +10,7 @@
   - sequence:
     - action: hassio.addon_stdin
       data:
-        addon: core_ssh
+        addon: a0d7b954_ssh
         input: "bash /config/git_backup.sh"
   mode: single
 
