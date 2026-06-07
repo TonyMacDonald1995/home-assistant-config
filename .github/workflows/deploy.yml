@@ -42,16 +42,15 @@ jobs:
             echo "required=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Git pull config on HA host (via SSH addon)
-        # shell_command runs in the HA Core container, which doesn't ship
-        # git. Run the pull inside the Advanced SSH addon instead, which
-        # has git available and read access to /config.
+      - name: Git pull config on HA host (via git_sync integration)
+        # Calls our custom_components/git_sync integration. It runs inside
+        # HA Core using dulwich (pure-Python git), so no SSH addon and no
+        # git binary on the host are required.
         run: |
           curl -f -s -X POST \
             -H "Authorization: Bearer ${{ secrets.HA_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"addon": "a0d7b954_ssh", "input": "git -C /config pull --rebase origin main"}' \
-            "${{ secrets.HA_URL }}/api/services/hassio/addon_stdin"
+            "${{ secrets.HA_URL }}/api/services/git_sync/pull"
 
       - name: Wait 5s for git pull to finish
         run: sleep 5

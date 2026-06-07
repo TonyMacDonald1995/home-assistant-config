@@ -83,4 +83,8 @@ esphome/secrets.yaml
 # === BLUEPRINTS (built-in HA blueprints, not custom) ===
 blueprints/*/homeassistant/
 
-custom_components/
+# Ignore external/HACS-managed integrations under custom_components/
+# but keep our own tracked. Use the /* pattern (not custom_components/)
+# so git still descends into the directory and honors the !exception.
+custom_components/*
+!custom_components/git_sync/

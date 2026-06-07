@@ -65,7 +65,7 @@ A fine-grained GitHub PAT is stored at `/config/.github_token` with `Contents: w
 - `secrets.yaml` — gitignored; must exist on the HA host
 - `esphome/secrets.yaml` — gitignored; must exist on the HA host
 - `.storage/` — gitignored; HA runtime state
-- `custom_components/` — gitignored
+- `custom_components/` — gitignored, with one exception: `custom_components/git_sync/` is our own integration and IS tracked (see `Custom integrations we own` below). Everything else under `custom_components/` (HACS, browser_mod, etc.) is managed externally and stays untracked.
 
 ---
 
@@ -122,9 +122,23 @@ Both scripts run inside the **SSH addon** container, not the HA core container.
 
 ---
 
+## Custom integrations we own
+
+`custom_components/git_sync/` — small HA integration that exposes the `git_sync.pull` service. The deploy workflow calls it after each merge to `git fetch origin && reset --hard origin/main` inside `/config`. Uses `dulwich` (pure-Python git) so it works regardless of whether the HA Core container ships the `git` binary. Enabled in `configuration.yaml` with `git_sync:`.
+
+Everything else under `custom_components/` (HACS, browser_mod, ha_creality_ws, bambu_lab) is managed externally and stays gitignored.
+
+---
+
 ## Deploy workflow details
 
-`deploy.yml` detects whether a full restart or a hot reload is needed by checking if `configuration.yaml` changed in the commit. Restart path notifies Slack first, then restarts. Reload path reloads automations, scripts, scenes, themes, and core config, then notifies. Failure always notifies with a link to the commit and the Actions run.
+`deploy.yml` detects whether a full restart or a hot reload is needed by:
+1. `configuration.yaml` changed in the commit (core config changes need restart), OR
+2. A new top-level `- id:` line was added under `automations/` (`automation.reload` reliably refreshes existing automations but can silently skip registration for brand-new ones).
+
+Restart path notifies Slack first, then restarts. Reload path reloads automations, scripts, scenes, themes, and core config, then notifies. Failure always notifies with a link to the commit and the Actions run.
+
+Config pull onto the HA host goes through the `git_sync.pull` service (see above), not `shell_command` or an addon stdin call.
 
 ---
 

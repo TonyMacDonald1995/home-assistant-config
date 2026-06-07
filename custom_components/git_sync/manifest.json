@@ -1,0 +1,9 @@
+{
+  "domain": "git_sync",
+  "name": "Git Sync",
+  "version": "0.1.0",
+  "documentation": "https://github.com/MakeNashville/home-assistant-config",
+  "codeowners": ["@kevinahuber"],
+  "iot_class": "local_polling",
+  "requirements": ["dulwich==0.22.7"]
+}
