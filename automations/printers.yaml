@@ -369,7 +369,6 @@
 - id: 'hms_error_alert'
   alias: HMS Error Alert
   description: Posts Bambu HMS hardware error details to #integrations_sandbox
-  enabled: false
   triggers:
   - entity_id:
     - binary_sensor.kiwi_hms_errors
@@ -632,7 +631,6 @@
         {{ line(p) }}
         {%- endfor %}
     action: notify.make_nashville
-    enabled: true
   mode: single
 - id: '1740500000001'
   alias: Lifecycle Printer Offline
