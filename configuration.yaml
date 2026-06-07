@@ -33,6 +33,11 @@ lovelace:
 shell_command:
   write_entity_list: "bash /config/write_entity_list.sh"
 
+# Custom integration in custom_components/git_sync/. Exposes
+# git_sync.pull, called by the deploy workflow to sync /config to
+# origin/main without needing the SSH addon or git binary.
+git_sync:
+
 rest_command:
   slack_post_3dprint:
     url: https://slack.com/api/chat.postMessage
