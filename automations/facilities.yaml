@@ -373,7 +373,7 @@
         {% for e in entries %}
           {% set dt = e.datetime | as_datetime %}
           {% if dt.date() == today and dt.hour >= 9 and dt.hour <= 20 %}
-            {% set ns.items = ns.items + [{'temp': e.temperature | float(0), 'hour': dt.hour}] %}
+            {% set ns.items = ns.items + [{'temp': e.temperature | float(0), 'humidity': e.humidity | float(0), 'hour': dt.hour}] %}
           {% endif %}
         {% endfor %}
         {{ ns.items }}
@@ -383,6 +383,16 @@
       peak_hour: >
         {% set sorted = forecast_today | sort(attribute='temp', reverse=true) | list %}
         {{ sorted[0].hour if sorted else 0 }}
+      peak_dewpoint: >
+        {% set ns = namespace(best=-1000) %}
+        {% for e in forecast_today %}
+          {% set tc = (e.temp - 32) * 5 / 9 %}
+          {% set h_safe = [e.humidity, 0.01] | max %}
+          {% set alpha = log(h_safe / 100) + (17.625 * tc) / (243.04 + tc) %}
+          {% set dp_f = ((243.04 * alpha) / (17.625 - alpha)) * 9 / 5 + 32 %}
+          {% if dp_f > ns.best %}{% set ns.best = dp_f %}{% endif %}
+        {% endfor %}
+        {{ (ns.best | round(0) | int) if forecast_today else 0 }}
   - choose:
     - conditions:
       - condition: template
@@ -393,7 +403,7 @@
           target: "#climate-feed"
           message: |
             :sun_with_face: *Heads up — it's going to be warm today*
-            Forecast peak: *{{ peak_temp }}°F* around {{ (peak_hour % 12) if (peak_hour % 12) != 0 else 12 }}{{ 'am' if peak_hour < 12 else 'pm' }}.
+            Forecast peak: *{{ peak_temp }}°F* (dewpoint {{ peak_dewpoint }}°F) around {{ (peak_hour % 12) if (peak_hour % 12) != 0 else 12 }}{{ 'am' if peak_hour < 12 else 'pm' }}.
             The warehouse usually runs warmer than outside. Dress light, bring water, plan breaks.
           data:
             username: Climate Watch
@@ -406,7 +416,7 @@
         data:
           target: "#climate-feed"
           message: |
-            :sun_with_face: *Today's forecast: peak around {{ peak_temp }}°F*
+            :sun_with_face: *Today's forecast: peak around {{ peak_temp }}°F (dewpoint {{ peak_dewpoint }}°F)*
             Comfortable conditions in the warehouse.
           data:
             username: Climate Watch
@@ -419,7 +429,7 @@
         data:
           target: "#climate-feed"
           message: |
-            :cold_face: *Today's forecast: peak around {{ peak_temp }}°F*
+            :cold_face: *Today's forecast: peak around {{ peak_temp }}°F (dewpoint {{ peak_dewpoint }}°F)*
             Chilly day ahead — layer up if you're stopping by.
           data:
             username: Climate Watch
@@ -472,13 +482,21 @@
         {% if t_raw not in ['unknown','unavailable',none] and h_raw not in ['unknown','unavailable',none] -%}
         {% set t = t_raw | float(0) -%}
         {% set h = h_raw | float(0) -%}
+        {% set tc = (t - 32) * 5 / 9 -%}
+        {% set h_safe = [h, 0.01] | max -%}
+        {% set alpha = log(h_safe / 100) + (17.625 * tc) / (243.04 + tc) -%}
+        {% set dp = ((243.04 * alpha) / (17.625 - alpha)) * 9 / 5 + 32 -%}
         {% set icon = ':rotating_light:' if t >= 95 else ':hot_face:' if t >= 88 else ':warning:' if t >= 82 else ':white_check_mark:' -%}
-        {{ icon }} {{ "%-17s"|format(a.name) }} {{ "%.1f°F"|format(t) }}  {{ h | round(0) | int }}%
+        {{ icon }} {{ "%-17s"|format(a.name) }} {{ "%.1f°F"|format(t) }}  {{ h | round(0) | int }}%  {{ dp | round(0) | int }}° DP
         {% endif -%}
         {% endfor -%}
         {% set ot = state_attr('weather.forecast_home','temperature') | float(0) -%}
         {% set orh = state_attr('weather.forecast_home','humidity') | float(0) -%}
+        {% set otc = (ot - 32) * 5 / 9 -%}
+        {% set orh_safe = [orh, 0.01] | max -%}
+        {% set out_alpha = log(orh_safe / 100) + (17.625 * otc) / (243.04 + otc) -%}
+        {% set out_dp = ((243.04 * out_alpha) / (17.625 - out_alpha)) * 9 / 5 + 32 -%}
         {% set out_icon = ':rotating_light:' if ot >= 95 else ':hot_face:' if ot >= 88 else ':warning:' if ot >= 82 else ':white_check_mark:' -%}
-        {{ out_icon }} {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%
+        {{ out_icon }} {{ "%-17s"|format('Outside') }} {{ "%.1f°F"|format(ot) }}  {{ orh | round(0) | int }}%  {{ out_dp | round(0) | int }}° DP
         {{ care_line -}}
   mode: single
