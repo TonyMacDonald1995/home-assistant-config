@@ -81,14 +81,15 @@
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         {%- set flavor = 'almost done!' if prog >= 90 else ('halfway there!' if prog >= 50 else 'printing away!') -%}
         :speech_balloon: {{ states('sensor.' + printer + '_print_progress', with_unit=True) }}
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} {{ flavor }} <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} {{ flavor }}
   - variables:
       is_bambu: "{{ printer in ['kiwi','mango','papaya','strawberry','huckleberry'] }}"
       blocks: >-
-        {%- if is_bambu -%}
         [{"type": "section", "text": {"type": "mrkdwn", "text": {{ progress_msg | tojson }}}},
         {"type": "actions", "elements":
-        [{"type": "button",
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}
+        {%- if is_bambu -%}
+        ,{"type": "button",
         "text": {"type": "plain_text", "text": "Pause Print"},
         "action_id": "pause_bambu_print",
         "value": "{{ printer }}",
@@ -96,8 +97,9 @@
         "title": {"type": "plain_text", "text": "Pause Print?"},
         "text": {"type": "mrkdwn", "text": "This will pause the current print. Are you sure?"},
         "confirm": {"type": "plain_text", "text": "Yes, pause it"},
-        "deny": {"type": "plain_text", "text": "Never mind"}}}]}]
+        "deny": {"type": "plain_text", "text": "Never mind"}}}
         {%- endif -%}
+        ]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
@@ -178,15 +180,15 @@
         :printer: {{ parts | join(' | ') }}
         {%- if parts %} — {% endif -%}
         {{ owner }}{{ object_name }} is underway!
-        {%- if bed_type %} on a {{ bed_type }}{% endif -%}
-        . <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if bed_type %} on a {{ bed_type }}{% endif -%}.
   - variables:
       is_bambu: "{{ printer in ['kiwi','mango','papaya','strawberry','huckleberry'] }}"
       blocks: >-
-        {%- if is_bambu -%}
         [{"type": "section", "text": {"type": "mrkdwn", "text": {{ msg | tojson }}}},
         {"type": "actions", "elements":
-        [{"type": "button",
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}
+        {%- if is_bambu -%}
+        ,{"type": "button",
         "text": {"type": "plain_text", "text": "Pause Print"},
         "action_id": "pause_bambu_print",
         "value": "{{ printer }}",
@@ -194,8 +196,9 @@
         "title": {"type": "plain_text", "text": "Pause Print?"},
         "text": {"type": "mrkdwn", "text": "This will pause the current print. Are you sure?"},
         "confirm": {"type": "plain_text", "text": "Yes, pause it"},
-        "deny": {"type": "plain_text", "text": "Never mind"}}}]}]
+        "deny": {"type": "plain_text", "text": "Never mind"}}}
         {%- endif -%}
+        ]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
@@ -262,13 +265,18 @@
       finished_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :white_check_mark: 100% | {{ job_time_str }}
-        {%- if used_weight %} | {{ used_weight }}{% endif %} — {{ owner }}{{ object_name }} is done! Come grab it and clear the plate for the next maker. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if used_weight %} | {{ used_weight }}{% endif %} — {{ owner }}{{ object_name }} is done! Come grab it and clear the plate for the next maker.
+      blocks: >-
+        [{"type": "section", "text": {"type": "mrkdwn", "text": {{ finished_msg | tojson }}}},
+        {"type": "actions", "elements":
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
       text: "{{ finished_msg }}"
       username: "{{ printer | capitalize }}"
       icon_emoji: ":{{ icon_name }}:"
+      blocks: "{{ blocks }}"
       thread_ts: "{{ thread_ts }}"
   - action: input_text.set_value
     target:
@@ -309,13 +317,18 @@
   - variables:
       stopped_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
-        :octagonal_sign: {{ progress }}% — {{ owner }}{{ object_name }} stopped mid-print. Come take a look and see what happened. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        :octagonal_sign: {{ progress }}% — {{ owner }}{{ object_name }} stopped mid-print. Come take a look and see what happened.
+      blocks: >-
+        [{"type": "section", "text": {"type": "mrkdwn", "text": {{ stopped_msg | tojson }}}},
+        {"type": "actions", "elements":
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
       text: "{{ stopped_msg }}"
       username: "{{ printer | capitalize }}"
       icon_emoji: ":{{ icon_name }}:"
+      blocks: "{{ blocks }}"
       thread_ts: "{{ thread_ts }}"
   - action: input_text.set_value
     target:
@@ -356,13 +369,18 @@
       error_msg: |-
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :rotating_light:
-        {%- if error_info %} {{ error_info }} —{% endif %} {{ owner }}{{ object_name }} hit a snag. Head over and check on it. <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if error_info %} {{ error_info }} —{% endif %} {{ owner }}{{ object_name }} hit a snag. Head over and check on it.
+      blocks: >-
+        [{"type": "section", "text": {"type": "mrkdwn", "text": {{ error_msg | tojson }}}},
+        {"type": "actions", "elements":
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
       text: "{{ error_msg }}"
       username: "{{ printer | capitalize }}"
       icon_emoji: ":{{ icon_name }}:"
+      blocks: "{{ blocks }}"
       thread_ts: "{{ thread_ts }}"
   mode: parallel
   max: 4
@@ -461,14 +479,15 @@
         {%- endif -%}
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :double_vertical_bar: {{ progress }}%
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is on hold. Head over when you get a chance! <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is on hold. Head over when you get a chance!
   - variables:
       is_bambu: "{{ printer in ['kiwi','mango','papaya','strawberry','huckleberry'] }}"
       blocks: >-
-        {%- if is_bambu -%}
         [{"type": "section", "text": {"type": "mrkdwn", "text": {{ paused_msg | tojson }}}},
         {"type": "actions", "elements":
-        [{"type": "button",
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}
+        {%- if is_bambu -%}
+        ,{"type": "button",
         "text": {"type": "plain_text", "text": "Resume Print"},
         "action_id": "resume_bambu_print",
         "value": "{{ printer }}",
@@ -476,8 +495,9 @@
         "title": {"type": "plain_text", "text": "Resume Print?"},
         "text": {"type": "mrkdwn", "text": "This will resume the paused print. Are you sure?"},
         "confirm": {"type": "plain_text", "text": "Yes, resume it"},
-        "deny": {"type": "plain_text", "text": "Never mind"}}}]}]
+        "deny": {"type": "plain_text", "text": "Never mind"}}}
         {%- endif -%}
+        ]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
@@ -530,14 +550,15 @@
         {%- endif -%}
         {%- set owner = '@' ~ display_name ~ ', ' if display_name != object_name else '' -%}
         :arrow_forward: {{ progress }}%
-        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is back at it! <{{ states('input_text.' + printer + '_stream') }}|Camera Feed>
+        {%- if time_str %} | {{ time_str }}{% endif %} — {{ owner }}{{ object_name }} is back at it!
   - variables:
       is_bambu: "{{ printer in ['kiwi','mango','papaya','strawberry','huckleberry'] }}"
       blocks: >-
-        {%- if is_bambu -%}
         [{"type": "section", "text": {"type": "mrkdwn", "text": {{ resumed_msg | tojson }}}},
         {"type": "actions", "elements":
-        [{"type": "button",
+        [{"type": "button", "text": {"type": "plain_text", "text": "Camera Feed"}, "url": "{{ states('input_text.' + printer + '_stream') }}"}
+        {%- if is_bambu -%}
+        ,{"type": "button",
         "text": {"type": "plain_text", "text": "Pause Print"},
         "action_id": "pause_bambu_print",
         "value": "{{ printer }}",
@@ -545,8 +566,9 @@
         "title": {"type": "plain_text", "text": "Pause Print?"},
         "text": {"type": "mrkdwn", "text": "This will pause the current print. Are you sure?"},
         "confirm": {"type": "plain_text", "text": "Yes, pause it"},
-        "deny": {"type": "plain_text", "text": "Never mind"}}}]}]
+        "deny": {"type": "plain_text", "text": "Never mind"}}}
         {%- endif -%}
+        ]}]
   - action: rest_command.slack_post_3dprint
     data:
       channel: "#3dprint-info"
