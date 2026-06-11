@@ -412,7 +412,7 @@ template:
             {% for name, entity in [
               ('Woodshop',       'sensor.woodshop_climate_sensor_temperature'),
               ('3D Print Room',  'sensor.air_quality_temperature'),
-              ('Ceramics',       'sensor.ceramics_climate_sensor_temperature'),
+              ('Metalshop',      'sensor.ceramics_climate_sensor_temperature'),
               ('Front Hallway',  'sensor.front_hallway_climate_sensor_temperature')
             ] %}
               {% set s = states(entity) %}

@@ -48,7 +48,7 @@ views:
                 name: Humidity
 
           - type: glance
-            title: Ceramics
+            title: Metalshop
             entities:
               - entity: sensor.ceramics_climate_sensor_temperature
                 name: Temperature
