@@ -130,7 +130,7 @@
     - sensor.pineapple_print_status
     to:
     - printing
-    from:
+    not_from:
     - paused
     for:
       seconds: 10
